@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>組織座標マッピング</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;600;700&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Noto Sans JP', sans-serif;
+    background: #0f1117;
+    color: #e4e4e7;
+    min-height: 100vh;
+    padding: 24px;
+  }
+
+  .container { max-width: 960px; margin: 0 auto; }
+
+  h1 {
+    font-size: 22px;
+    font-weight: 700;
+    color: #f4f4f5;
+    margin-bottom: 4px;
+    letter-spacing: 0.02em;
+  }
+
+  .subtitle {
+    font-size: 13px;
+    color: #71717a;
+    margin-bottom: 24px;
+  }
+
+  .tabs {
+    display: flex;
+    gap: 2px;
+    margin-bottom: 20px;
+  }
+
+  .tab-btn {
+    padding: 8px 20px;
+    font-size: 13px;
+    font-family: inherit;
+    font-weight: 400;
+    background: transparent;
+    color: #71717a;
+    border: 1px solid transparent;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .tab-btn.active {
+    font-weight: 600;
+    background: #1e1e2e;
+    color: #f4f4f5;
+    border-color: #2e2e3e;
+  }
+
+  .content-row {
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap;
+  }
+
+  .panel {
+    background: #16171f;
+    border-radius: 12px;
+    border: 1px solid #2e2e3e;
+    padding: 20px;
+  }
+
+  .panel-plot { flex: 1 1 420px; padding: 16px; }
+  .panel-form { flex: 1 1 280px; }
+  .panel-full { flex: 1 1 100%; }
+
+  .panel h3 {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 16px;
+    color: #f4f4f5;
+  }
+
+  label {
+    display: block;
+    font-size: 11px;
+    color: #a1a1aa;
+    margin-bottom: 4px;
+    font-weight: 500;
+  }
+
+  input[type="text"] {
+    width: 100%;
+    padding: 8px 10px;
+    font-size: 13px;
+    font-family: inherit;
+    background: #1e1e2e;
+    border: 1px solid #2e2e3e;
+    border-radius: 6px;
+    color: #f4f4f5;
+    outline: none;
+  }
+
+  input[type="range"] {
+    width: 100%;
+    accent-color: #6366f1;
+  }
+
+  .range-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 10px;
+    color: #52525b;
+  }
+
+  .field { margin-bottom: 12px; }
+  .field-slider { margin-bottom: 14px; }
+
+  .btn-primary {
+    width: 100%;
+    padding: 10px;
+    font-size: 13px;
+    font-weight: 600;
+    font-family: inherit;
+    background: #6366f1;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+
+  .btn-primary:hover { background: #5558e6; }
+
+  .btn-secondary {
+    flex: 1;
+    padding: 8px;
+    font-size: 12px;
+    font-family: inherit;
+    background: #1e1e2e;
+    color: #a1a1aa;
+    border: 1px solid #2e2e3e;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+
+  .btn-secondary:hover { background: #252535; }
+
+  .btn-row {
+    display: flex;
+    gap: 8px;
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid #2e2e3e;
+  }
+
+  .member-tags {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid #2e2e3e;
+  }
+
+  .member-tags p {
+    font-size: 11px;
+    color: #71717a;
+    margin-bottom: 8px;
+  }
+
+  .tag-list { display: flex; flex-wrap: wrap; gap: 4px; }
+
+  .tag {
+    font-size: 11px;
+    padding: 3px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    border: 1px solid;
+    transition: all 0.15s;
+  }
+
+  .plot-legend {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 8px;
+    flex-wrap: wrap;
+  }
+
+  .plot-legend span { font-size: 10px; color: #71717a; }
+  .plot-legend .gold { color: #fbbf24; }
+
+  /* Analysis tab */
+  .health-card {
+    flex: 1 1 280px;
+    text-align: center;
+    padding: 24px;
+  }
+
+  .health-label { font-size: 12px; color: #71717a; margin-bottom: 8px; }
+
+  .health-score {
+    font-size: 56px;
+    font-weight: 700;
+    line-height: 1;
+  }
+
+  .health-max { font-size: 11px; color: #52525b; margin-top: 8px; }
+
+  .warning-box {
+    margin-top: 16px;
+    padding: 10px 14px;
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    border-radius: 8px;
+    font-size: 12px;
+    color: #fca5a5;
+    text-align: left;
+  }
+
+  .logic-section { margin-top: 20px; text-align: left; }
+  .logic-section p.logic-title { font-size: 11px; color: #71717a; margin-bottom: 6px; }
+  .logic-section p.logic-body { font-size: 10px; color: #52525b; line-height: 1.6; }
+
+  .dist-card {
+    flex: 1 1 380px;
+    padding: 24px;
+  }
+
+  .dist-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: #f4f4f5;
+    margin-bottom: 16px;
+  }
+
+  .bar-item { margin-bottom: 14px; }
+
+  .bar-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 4px;
+  }
+
+  .bar-name { font-size: 12px; font-weight: 500; }
+  .bar-name .count { color: #52525b; font-weight: 400; }
+  .bar-value { font-size: 12px; color: #a1a1aa; }
+
+  .bar-track {
+    height: 8px;
+    background: #1e1e2e;
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  .bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.4s ease;
+  }
+
+  .center-box {
+    margin-top: 20px;
+    padding: 12px 14px;
+    background: #1e1e2e;
+    border-radius: 8px;
+    font-size: 12px;
+    color: #a1a1aa;
+    line-height: 1.7;
+  }
+
+  .center-box strong { font-weight: 600; color: #f4f4f5; }
+  .center-box .note { font-size: 11px; color: #71717a; }
+
+  .reading-card { padding: 24px; }
+  .reading-title { font-size: 13px; font-weight: 600; color: #f4f4f5; margin-bottom: 12px; }
+  .reading-body { font-size: 12px; color: #a1a1aa; line-height: 1.8; }
+  .reading-body p { margin-bottom: 8px; }
+  .reading-body .hl-gold { color: #fbbf24; font-weight: 600; }
+  .reading-body .hl-red { color: #ef4444; font-weight: 600; }
+
+  .empty-state {
+    padding: 40px;
+    text-align: center;
+    color: #52525b;
+    font-size: 13px;
+  }
+
+  /* Members table */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+
+  th {
+    padding: 10px 14px;
+    text-align: left;
+    font-size: 11px;
+    color: #71717a;
+    font-weight: 500;
+    border-bottom: 1px solid #2e2e3e;
+  }
+
+  td {
+    padding: 10px 14px;
+    border-bottom: 1px solid #1e1e2e;
+  }
+
+  td.name-cell { font-weight: 500; color: #f4f4f5; }
+
+  .q-badge {
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 4px;
+  }
+
+  .remove-btn {
+    background: transparent;
+    border: none;
+    color: #52525b;
+    cursor: pointer;
+    font-size: 13px;
+    font-family: inherit;
+  }
+
+  .remove-btn:hover { color: #ef4444; }
+
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  @media (max-width: 640px) {
+    body { padding: 16px; }
+    h1 { font-size: 18px; }
+    .content-row { gap: 16px; }
+    .panel-plot, .panel-form { flex: 1 1 100%; }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <h1>組織座標マッピング</h1>
+  <p class="subtitle">X軸：保守⇔革新　Y軸：利己⇔公共　Z軸（円の大きさ）：権力</p>
+
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="map">座標マップ</button>
+    <button class="tab-btn" data-tab="analysis">組織分析</button>
+    <button class="tab-btn" data-tab="members">メンバー管理</button>
+  </div>
+
+  <!-- MAP TAB -->
+  <div id="tab-map" class="tab-content active">
+    <div class="content-row">
+      <div class="panel panel-plot">
+        <svg id="plot" viewBox="0 0 400 400" style="width:100%;max-width:400px"></svg>
+        <div class="plot-legend">
+          <span>円の大きさ＝権力（Z軸）</span>
+          <span class="gold">＋ 組織の重心（権力加重）</span>
+        </div>
+      </div>
+      <div class="panel panel-form">
+        <h3>メンバー追加</h3>
+        <div class="field">
+          <label>名前・役職</label>
+          <input type="text" id="input-name" placeholder="例：部長A">
+        </div>
+        <div class="field-slider">
+          <label>X軸：保守性：<span id="val-x">5</span></label>
+          <input type="range" id="input-x" min="0" max="10" value="5">
+          <div class="range-labels"><span>革新 (0)</span><span>保守 (10)</span></div>
+        </div>
+        <div class="field-slider">
+          <label>Y軸：公共性：<span id="val-y">5</span></label>
+          <input type="range" id="input-y" min="0" max="10" value="5">
+          <div class="range-labels"><span>利己 (0)</span><span>公共 (10)</span></div>
+        </div>
+        <div class="field-slider">
+          <label>Z軸：権力：<span id="val-z">5</span></label>
+          <input type="range" id="input-z" min="1" max="10" value="5">
+          <div class="range-labels"><span>低 (1)</span><span>高 (10)</span></div>
+        </div>
+        <button class="btn-primary" id="btn-add">追加</button>
+        <div class="btn-row">
+          <button class="btn-secondary" id="btn-sample">サンプル読込</button>
+          <button class="btn-secondary" id="btn-clear">全削除</button>
+        </div>
+        <div class="member-tags" id="tag-area"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ANALYSIS TAB -->
+  <div id="tab-analysis" class="tab-content">
+    <div id="analysis-content"></div>
+  </div>
+
+  <!-- MEMBERS TAB -->
+  <div id="tab-members" class="tab-content">
+    <div class="panel" id="members-content" style="padding:0;overflow:hidden;"></div>
+  </div>
+</div>
+
+<script>
+const SAMPLE = [
+  { id: 1, name: "上司A（部長）", x: 7, y: 2, z: 8 },
+  { id: 2, name: "同僚B（一般）", x: 7, y: 3, z: 2 },
+  { id: 3, name: "先輩C（課長）", x: 4, y: 7, z: 6 },
+  { id: 4, name: "若手D（主任）", x: 2, y: 8, z: 3 },
+  { id: 5, name: "役員E", x: 8, y: 2, z: 10 },
+  { id: 6, name: "中堅F（係長）", x: 5, y: 5, z: 4 },
+];
+
+const QC = {
+  topLeft:     { bg: "rgba(59,130,246,0.08)",  border: "#3b82f6", label: "革新×公共", desc: "変革の推進者" },
+  topRight:    { bg: "rgba(16,185,129,0.08)",  border: "#10b981", label: "保守×公共", desc: "組織の守護者" },
+  bottomLeft:  { bg: "rgba(245,158,11,0.08)",  border: "#f59e0b", label: "革新×利己", desc: "野心的破壊者" },
+  bottomRight: { bg: "rgba(239,68,68,0.08)",   border: "#ef4444", label: "保守×利己", desc: "静かなる岩" },
+};
+
+let members = [];
+let nextId = 1;
+let selectedId = null;
+
+function getQ(x, y) {
+  if (x <= 5 && y > 5) return "topLeft";
+  if (x > 5 && y > 5) return "topRight";
+  if (x <= 5 && y <= 5) return "bottomLeft";
+  return "bottomRight";
+}
+
+function dotColor(x, y) { return QC[getQ(x, y)].border; }
+
+const PAD = 40, SIZE = 400;
+function px(v) { return PAD + (v / 10) * (SIZE - PAD * 2); }
+function py(v) { return PAD + ((10 - v) / 10) * (SIZE - PAD * 2); }
+
+function svgEl(tag, attrs, parent) {
+  const el = document.createElementNS("http://www.w3.org/2000/svg", tag);
+  for (const [k, v] of Object.entries(attrs || {})) el.setAttribute(k, v);
+  if (parent) parent.appendChild(el);
+  return el;
+}
+
+function analyze() {
+  if (!members.length) return null;
+  const quads = { topLeft: [], topRight: [], bottomLeft: [], bottomRight: [] };
+  let totalZ = 0, wX = 0, wY = 0;
+  members.forEach(m => {
+    quads[getQ(m.x, m.y)].push(m);
+    totalZ += m.z; wX += m.x * m.z; wY += m.y * m.z;
+  });
+  const cx = totalZ ? wX / totalZ : 5;
+  const cy = totalZ ? wY / totalZ : 5;
+  const qPow = {};
+  for (const q of Object.keys(quads)) qPow[q] = quads[q].reduce((s, m) => s + m.z, 0);
+  const brRatio = totalZ ? qPow.bottomRight / totalZ : 0;
+  const pwY = totalZ ? wY / totalZ : 5;
+  const health = Math.round(Math.max(0, Math.min(100, (pwY / 10) * 60 + (1 - brRatio) * 40)));
+  return { quads, qPow, cx, cy, totalZ, health, pwY, brRatio, critical: brRatio > 0.5 };
+}
+
+function renderPlot() {
+  const svg = document.getElementById("plot");
+  svg.innerHTML = "";
+  const half = (SIZE - PAD * 2) / 2;
+
+  // Quadrant bgs
+  const qPos = [
+    ["topLeft", px(0), py(10)], ["topRight", px(5), py(10)],
+    ["bottomLeft", px(0), py(5)], ["bottomRight", px(5), py(5)]
+  ];
+  qPos.forEach(([q, x, y]) => svgEl("rect", { x, y, width: half, height: half, fill: QC[q].bg }, svg));
+
+  // Quadrant labels
+  const qlPos = [
+    ["topLeft", 2.5, 8], ["topRight", 7.5, 8],
+    ["bottomLeft", 2.5, 2.5], ["bottomRight", 7.5, 2.5]
+  ];
+  qlPos.forEach(([q, cx, cy]) => {
+    svgEl("text", { x: px(cx), y: py(cy), "text-anchor": "middle", fill: QC[q].border, "font-size": "9", "font-weight": "600", opacity: "0.7" }, svg).textContent = QC[q].label;
+    svgEl("text", { x: px(cx), y: py(cy) + 13, "text-anchor": "middle", fill: QC[q].border, "font-size": "7", opacity: "0.5" }, svg).textContent = QC[q].desc;
+  });
+
+  // Axes
+  svgEl("line", { x1: px(5), y1: py(0), x2: px(5), y2: py(10), stroke: "#3f3f46", "stroke-width": 1, "stroke-dasharray": "3,3" }, svg);
+  svgEl("line", { x1: px(0), y1: py(5), x2: px(10), y2: py(5), stroke: "#3f3f46", "stroke-width": 1, "stroke-dasharray": "3,3" }, svg);
+
+  // Axis labels
+  const labels = [
+    [px(0), py(5) - 6, "革新"], [px(9.2), py(5) - 6, "保守"],
+    [px(5) + 6, py(9.5), "公共"], [px(5) + 6, py(0.5), "利己"]
+  ];
+  labels.forEach(([x, y, t]) => {
+    svgEl("text", { x, y, "font-size": "8", fill: "#71717a" }, svg).textContent = t;
+  });
+
+  // Org center
+  const a = analyze();
+  if (a) {
+    svgEl("line", { x1: px(a.cx) - 8, y1: py(a.cy), x2: px(a.cx) + 8, y2: py(a.cy), stroke: "#fbbf24", "stroke-width": 2 }, svg);
+    svgEl("line", { x1: px(a.cx), y1: py(a.cy) - 8, x2: px(a.cx), y2: py(a.cy) + 8, stroke: "#fbbf24", "stroke-width": 2 }, svg);
+  }
+
+  // Dots
+  members.forEach(m => {
+    const r = 4 + m.z * 2;
+    const c = dotColor(m.x, m.y);
+    const isSel = m.id === selectedId;
+    const g = svgEl("g", { style: "cursor:pointer" }, svg);
+
+    svgEl("circle", {
+      cx: px(m.x), cy: py(m.y), r,
+      fill: c, "fill-opacity": isSel ? 0.5 : 0.25,
+      stroke: c, "stroke-width": isSel ? 2.5 : 1
+    }, g);
+
+    g.addEventListener("click", () => { selectedId = selectedId === m.id ? null : m.id; render(); });
+    g.addEventListener("mouseenter", () => showTooltip(g, m, r));
+    g.addEventListener("mouseleave", () => { const tt = g.querySelector(".tt"); if (tt) tt.remove(); });
+
+    if (isSel) showTooltip(g, m, r);
+  });
+}
+
+function showTooltip(g, m, r) {
+  if (g.querySelector(".tt")) return;
+  const gg = svgEl("g", { class: "tt" }, g);
+  const w = Math.max(m.name.length * 9, 80);
+  svgEl("rect", { x: px(m.x) + r + 4, y: py(m.y) - 22, width: w, height: 36, rx: 4, fill: "#1e1e2e", stroke: "#3f3f46", "stroke-width": 1 }, gg);
+  const t1 = svgEl("text", { x: px(m.x) + r + 10, y: py(m.y) - 8, "font-size": "9", "font-weight": "600", fill: "#f4f4f5" }, gg);
+  t1.textContent = m.name;
+  const t2 = svgEl("text", { x: px(m.x) + r + 10, y: py(m.y) + 6, "font-size": "8", fill: "#a1a1aa" }, gg);
+  t2.textContent = `X:${m.x} Y:${m.y} Z:${m.z}`;
+}
+
+function renderTags() {
+  const area = document.getElementById("tag-area");
+  if (!members.length) { area.innerHTML = ""; return; }
+  let html = `<p>登録：${members.length}名（クリックで選択）</p><div class="tag-list">`;
+  members.forEach(m => {
+    const c = dotColor(m.x, m.y);
+    const bg = selectedId === m.id ? c + "33" : "#1e1e2e";
+    html += `<span class="tag" data-id="${m.id}" style="background:${bg};border-color:${c}44;color:${c}">${m.name}</span>`;
+  });
+  html += "</div>";
+  area.innerHTML = html;
+  area.querySelectorAll(".tag").forEach(el => {
+    el.addEventListener("click", () => { const id = +el.dataset.id; selectedId = selectedId === id ? null : id; render(); });
+  });
+}
+
+function renderAnalysis() {
+  const cont = document.getElementById("analysis-content");
+  const a = analyze();
+  if (!a) { cont.innerHTML = '<div class="panel empty-state">メンバーを追加すると分析結果が表示されます。</div>'; return; }
+
+  const hColor = a.health >= 60 ? "#10b981" : a.health >= 40 ? "#f59e0b" : "#ef4444";
+  let html = '<div class="content-row">';
+
+  // Health card
+  html += `<div class="panel health-card">
+    <p class="health-label">組織健全性スコア</p>
+    <div class="health-score" style="color:${hColor}">${a.health}</div>
+    <p class="health-max">/ 100</p>`;
+  if (a.critical) html += `<div class="warning-box">⚠ 臨界点警告：「保守×利己」象限の権力比率が50%を超えています。組織硬直化のリスクが高い状態です。</div>`;
+  html += `<div class="logic-section">
+    <p class="logic-title">算出ロジック</p>
+    <p class="logic-body">権力加重Y軸平均（公共性）× 60% ＋ 右下象限の非権力比率 × 40%で算出。権力の大きい人ほど組織全体のスコアへの影響が大きくなる設計。</p>
+  </div></div>`;
+
+  // Distribution card
+  html += `<div class="panel dist-card"><p class="dist-title">象限別パワー分布（権力×人数）</p>`;
+  for (const [key, val] of Object.entries(QC)) {
+    const pow = a.qPow[key] || 0;
+    const ratio = a.totalZ ? pow / a.totalZ : 0;
+    const cnt = a.quads[key].length;
+    html += `<div class="bar-item">
+      <div class="bar-header">
+        <span class="bar-name" style="color:${val.border}">${val.label} <span class="count">(${cnt}名)</span></span>
+        <span class="bar-value">権力値 ${pow} (${Math.round(ratio * 100)}%)</span>
+      </div>
+      <div class="bar-track"><div class="bar-fill" style="width:${ratio * 100}%;background:${val.border}"></div></div>
+    </div>`;
+  }
+  const xLabel = a.cx > 5 ? "保守寄り" : "革新寄り";
+  const yLabel = a.cy > 5 ? "公共寄り" : "利己寄り";
+  html += `<div class="center-box">
+    <strong>組織の重心：</strong>X=${a.cx.toFixed(1)}（${xLabel}）Y=${a.cy.toFixed(1)}（${yLabel}）<br>
+    <span class="note">※ 権力値で加重平均。権力の大きい人ほど組織の方向性に影響。</span>
+  </div></div>`;
+
+  // Reading card
+  html += `<div class="panel reading-card panel-full">
+    <p class="reading-title">分析の読み方</p>
+    <div class="reading-body">
+      <p>このモデルは、新見智紀氏の「権力×人数の重み付け」仮説に基づいています。単純に「右下（保守×利己）の人が何人いるか」ではなく、その人たちが持つ権力値の合計が組織全体のどれだけを占めるかで健全性を測ります。</p>
+      <p><span class="hl-gold">組織の重心（黄色の十字）</span>が右下に沈んでいるほど、組織全体が「権力者の保身」によって方向づけられている状態です。</p>
+      <p><span class="hl-red">臨界点</span>：右下象限の権力比率が50%を超えると、革新的・公共的な人材が離脱し始め、バランスがさらに崩れる自己強化ループに入るリスクがあります。</p>
+    </div>
+  </div>`;
+
+  html += "</div>";
+  cont.innerHTML = html;
+}
+
+function renderMembers() {
+  const cont = document.getElementById("members-content");
+  if (!members.length) { cont.innerHTML = '<div class="empty-state">メンバーが登録されていません。座標マップタブから追加してください。</div>'; return; }
+  const a = analyze();
+  let html = "<table><thead><tr><th>名前</th><th>X（保守性）</th><th>Y（公共性）</th><th>Z（権力）</th><th>象限</th><th>権力影響度</th><th></th></tr></thead><tbody>";
+  members.forEach(m => {
+    const q = getQ(m.x, m.y);
+    const inf = a ? ((m.z / a.totalZ) * 100).toFixed(1) : "0";
+    html += `<tr>
+      <td class="name-cell">${m.name}</td><td>${m.x}</td><td>${m.y}</td><td>${m.z}</td>
+      <td><span class="q-badge" style="background:${QC[q].border}22;color:${QC[q].border}">${QC[q].label}</span></td>
+      <td style="color:#a1a1aa">${inf}%</td>
+      <td><button class="remove-btn" data-id="${m.id}">✕</button></td>
+    </tr>`;
+  });
+  html += "</tbody></table>";
+  cont.innerHTML = html;
+  cont.querySelectorAll(".remove-btn").forEach(el => {
+    el.addEventListener("click", () => { const id = +el.dataset.id; members = members.filter(m => m.id !== id); if (selectedId === id) selectedId = null; render(); });
+  });
+}
+
+function render() {
+  renderPlot();
+  renderTags();
+  renderAnalysis();
+  renderMembers();
+}
+
+// Tabs
+document.querySelectorAll(".tab-btn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+    document.querySelectorAll(".tab-content").forEach(c => c.classList.remove("active"));
+    btn.classList.add("active");
+    document.getElementById("tab-" + btn.dataset.tab).classList.add("active");
+  });
+});
+
+// Sliders
+["x", "y", "z"].forEach(k => {
+  document.getElementById("input-" + k).addEventListener("input", e => {
+    document.getElementById("val-" + k).textContent = e.target.value;
+  });
+});
+
+// Add
+document.getElementById("btn-add").addEventListener("click", () => {
+  const name = document.getElementById("input-name").value.trim();
+  if (!name) return;
+  members.push({
+    id: nextId++,
+    name,
+    x: +document.getElementById("input-x").value,
+    y: +document.getElementById("input-y").value,
+    z: +document.getElementById("input-z").value
+  });
+  document.getElementById("input-name").value = "";
+  document.getElementById("input-x").value = 5; document.getElementById("val-x").textContent = "5";
+  document.getElementById("input-y").value = 5; document.getElementById("val-y").textContent = "5";
+  document.getElementById("input-z").value = 5; document.getElementById("val-z").textContent = "5";
+  render();
+});
+
+// Sample & Clear
+document.getElementById("btn-sample").addEventListener("click", () => {
+  members = SAMPLE.map(m => ({ ...m }));
+  nextId = 7;
+  selectedId = null;
+  render();
+});
+
+document.getElementById("btn-clear").addEventListener("click", () => {
+  members = [];
+  selectedId = null;
+  render();
+});
+
+// Enter key
+document.getElementById("input-name").addEventListener("keydown", e => {
+  if (e.key === "Enter") document.getElementById("btn-add").click();
+});
+
+render();
+</script>
+</body>
+</html>
