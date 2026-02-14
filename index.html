@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>組織座標マッピング</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;600;700&display=swap');
 
@@ -37,6 +38,7 @@
     display: flex;
     gap: 2px;
     margin-bottom: 20px;
+    flex-wrap: wrap;
   }
 
   .tab-btn {
@@ -147,12 +149,74 @@
 
   .btn-secondary:hover { background: #252535; }
 
+  .btn-excel {
+    flex: 1;
+    padding: 8px;
+    font-size: 12px;
+    font-family: inherit;
+    background: #1e3a2e;
+    color: #4ade80;
+    border: 1px solid #2e5e3e;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+
+  .btn-excel:hover { background: #254a38; }
+
   .btn-row {
     display: flex;
     gap: 8px;
     margin-top: 16px;
     padding-top: 16px;
     border-top: 1px solid #2e2e3e;
+  }
+
+  .btn-row-excel {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+  }
+
+  .excel-section {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid #2e2e3e;
+  }
+
+  .excel-section h4 {
+    font-size: 12px;
+    font-weight: 600;
+    color: #4ade80;
+    margin-bottom: 10px;
+  }
+
+  .excel-hint {
+    font-size: 10px;
+    color: #52525b;
+    margin-top: 6px;
+    line-height: 1.5;
+  }
+
+  .import-result {
+    margin-top: 8px;
+    padding: 8px 10px;
+    border-radius: 6px;
+    font-size: 11px;
+    display: none;
+  }
+
+  .import-result.success {
+    display: block;
+    background: rgba(74, 222, 128, 0.1);
+    border: 1px solid rgba(74, 222, 128, 0.3);
+    color: #4ade80;
+  }
+
+  .import-result.error {
+    display: block;
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    color: #fca5a5;
   }
 
   .member-tags {
@@ -189,21 +253,9 @@
   .plot-legend span { font-size: 10px; color: #71717a; }
   .plot-legend .gold { color: #fbbf24; }
 
-  /* Analysis tab */
-  .health-card {
-    flex: 1 1 280px;
-    text-align: center;
-    padding: 24px;
-  }
-
+  .health-card { flex: 1 1 280px; text-align: center; padding: 24px; }
   .health-label { font-size: 12px; color: #71717a; margin-bottom: 8px; }
-
-  .health-score {
-    font-size: 56px;
-    font-weight: 700;
-    line-height: 1;
-  }
-
+  .health-score { font-size: 56px; font-weight: 700; line-height: 1; }
   .health-max { font-size: 11px; color: #52525b; margin-top: 8px; }
 
   .warning-box {
@@ -221,42 +273,17 @@
   .logic-section p.logic-title { font-size: 11px; color: #71717a; margin-bottom: 6px; }
   .logic-section p.logic-body { font-size: 10px; color: #52525b; line-height: 1.6; }
 
-  .dist-card {
-    flex: 1 1 380px;
-    padding: 24px;
-  }
-
-  .dist-title {
-    font-size: 13px;
-    font-weight: 600;
-    color: #f4f4f5;
-    margin-bottom: 16px;
-  }
+  .dist-card { flex: 1 1 380px; padding: 24px; }
+  .dist-title { font-size: 13px; font-weight: 600; color: #f4f4f5; margin-bottom: 16px; }
 
   .bar-item { margin-bottom: 14px; }
-
-  .bar-header {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 4px;
-  }
-
+  .bar-header { display: flex; justify-content: space-between; margin-bottom: 4px; }
   .bar-name { font-size: 12px; font-weight: 500; }
   .bar-name .count { color: #52525b; font-weight: 400; }
   .bar-value { font-size: 12px; color: #a1a1aa; }
 
-  .bar-track {
-    height: 8px;
-    background: #1e1e2e;
-    border-radius: 4px;
-    overflow: hidden;
-  }
-
-  .bar-fill {
-    height: 100%;
-    border-radius: 4px;
-    transition: width 0.4s ease;
-  }
+  .bar-track { height: 8px; background: #1e1e2e; border-radius: 4px; overflow: hidden; }
+  .bar-fill { height: 100%; border-radius: 4px; transition: width 0.4s ease; }
 
   .center-box {
     margin-top: 20px;
@@ -278,19 +305,9 @@
   .reading-body .hl-gold { color: #fbbf24; font-weight: 600; }
   .reading-body .hl-red { color: #ef4444; font-weight: 600; }
 
-  .empty-state {
-    padding: 40px;
-    text-align: center;
-    color: #52525b;
-    font-size: 13px;
-  }
+  .empty-state { padding: 40px; text-align: center; color: #52525b; font-size: 13px; }
 
-  /* Members table */
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 13px;
-  }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
 
   th {
     padding: 10px 14px;
@@ -301,18 +318,10 @@
     border-bottom: 1px solid #2e2e3e;
   }
 
-  td {
-    padding: 10px 14px;
-    border-bottom: 1px solid #1e1e2e;
-  }
-
+  td { padding: 10px 14px; border-bottom: 1px solid #1e1e2e; }
   td.name-cell { font-weight: 500; color: #f4f4f5; }
 
-  .q-badge {
-    font-size: 11px;
-    padding: 2px 8px;
-    border-radius: 4px;
-  }
+  .q-badge { font-size: 11px; padding: 2px 8px; border-radius: 4px; }
 
   .remove-btn {
     background: transparent;
@@ -327,6 +336,8 @@
 
   .tab-content { display: none; }
   .tab-content.active { display: block; }
+
+  input[type="file"] { display: none; }
 
   @media (max-width: 640px) {
     body { padding: 16px; }
@@ -348,7 +359,6 @@
     <button class="tab-btn" data-tab="members">メンバー管理</button>
   </div>
 
-  <!-- MAP TAB -->
   <div id="tab-map" class="tab-content active">
     <div class="content-row">
       <div class="panel panel-plot">
@@ -380,21 +390,34 @@
           <div class="range-labels"><span>低 (1)</span><span>高 (10)</span></div>
         </div>
         <button class="btn-primary" id="btn-add">追加</button>
+
         <div class="btn-row">
           <button class="btn-secondary" id="btn-sample">サンプル読込</button>
           <button class="btn-secondary" id="btn-clear">全削除</button>
         </div>
+
+        <!-- Excel section -->
+        <div class="excel-section">
+          <h4>📊 Excel連携</h4>
+          <div class="btn-row-excel">
+            <button class="btn-excel" id="btn-import">Excel読込</button>
+            <button class="btn-excel" id="btn-export">Excel出力</button>
+            <button class="btn-excel" id="btn-template">テンプレート</button>
+          </div>
+          <input type="file" id="file-input" accept=".xlsx,.xls,.csv">
+          <p class="excel-hint">列の並び：名前 / X（保守性）/ Y（公共性）/ Z（権力）<br>1行目はヘッダーとしてスキップされます</p>
+          <div class="import-result" id="import-result"></div>
+        </div>
+
         <div class="member-tags" id="tag-area"></div>
       </div>
     </div>
   </div>
 
-  <!-- ANALYSIS TAB -->
   <div id="tab-analysis" class="tab-content">
     <div id="analysis-content"></div>
   </div>
 
-  <!-- MEMBERS TAB -->
   <div id="tab-members" class="tab-content">
     <div class="panel" id="members-content" style="padding:0;overflow:hidden;"></div>
   </div>
@@ -441,6 +464,8 @@ function svgEl(tag, attrs, parent) {
   return el;
 }
 
+function clamp(val, min, max) { return Math.max(min, Math.min(max, val)); }
+
 function analyze() {
   if (!members.length) return null;
   const quads = { topLeft: [], topRight: [], bottomLeft: [], bottomRight: [] };
@@ -464,14 +489,12 @@ function renderPlot() {
   svg.innerHTML = "";
   const half = (SIZE - PAD * 2) / 2;
 
-  // Quadrant bgs
   const qPos = [
     ["topLeft", px(0), py(10)], ["topRight", px(5), py(10)],
     ["bottomLeft", px(0), py(5)], ["bottomRight", px(5), py(5)]
   ];
   qPos.forEach(([q, x, y]) => svgEl("rect", { x, y, width: half, height: half, fill: QC[q].bg }, svg));
 
-  // Quadrant labels
   const qlPos = [
     ["topLeft", 2.5, 8], ["topRight", 7.5, 8],
     ["bottomLeft", 2.5, 2.5], ["bottomRight", 7.5, 2.5]
@@ -481,11 +504,9 @@ function renderPlot() {
     svgEl("text", { x: px(cx), y: py(cy) + 13, "text-anchor": "middle", fill: QC[q].border, "font-size": "7", opacity: "0.5" }, svg).textContent = QC[q].desc;
   });
 
-  // Axes
   svgEl("line", { x1: px(5), y1: py(0), x2: px(5), y2: py(10), stroke: "#3f3f46", "stroke-width": 1, "stroke-dasharray": "3,3" }, svg);
   svgEl("line", { x1: px(0), y1: py(5), x2: px(10), y2: py(5), stroke: "#3f3f46", "stroke-width": 1, "stroke-dasharray": "3,3" }, svg);
 
-  // Axis labels
   const labels = [
     [px(0), py(5) - 6, "革新"], [px(9.2), py(5) - 6, "保守"],
     [px(5) + 6, py(9.5), "公共"], [px(5) + 6, py(0.5), "利己"]
@@ -494,14 +515,12 @@ function renderPlot() {
     svgEl("text", { x, y, "font-size": "8", fill: "#71717a" }, svg).textContent = t;
   });
 
-  // Org center
   const a = analyze();
   if (a) {
     svgEl("line", { x1: px(a.cx) - 8, y1: py(a.cy), x2: px(a.cx) + 8, y2: py(a.cy), stroke: "#fbbf24", "stroke-width": 2 }, svg);
     svgEl("line", { x1: px(a.cx), y1: py(a.cy) - 8, x2: px(a.cx), y2: py(a.cy) + 8, stroke: "#fbbf24", "stroke-width": 2 }, svg);
   }
 
-  // Dots
   members.forEach(m => {
     const r = 4 + m.z * 2;
     const c = dotColor(m.x, m.y);
@@ -527,10 +546,8 @@ function showTooltip(g, m, r) {
   const gg = svgEl("g", { class: "tt" }, g);
   const w = Math.max(m.name.length * 9, 80);
   svgEl("rect", { x: px(m.x) + r + 4, y: py(m.y) - 22, width: w, height: 36, rx: 4, fill: "#1e1e2e", stroke: "#3f3f46", "stroke-width": 1 }, gg);
-  const t1 = svgEl("text", { x: px(m.x) + r + 10, y: py(m.y) - 8, "font-size": "9", "font-weight": "600", fill: "#f4f4f5" }, gg);
-  t1.textContent = m.name;
-  const t2 = svgEl("text", { x: px(m.x) + r + 10, y: py(m.y) + 6, "font-size": "8", fill: "#a1a1aa" }, gg);
-  t2.textContent = `X:${m.x} Y:${m.y} Z:${m.z}`;
+  svgEl("text", { x: px(m.x) + r + 10, y: py(m.y) - 8, "font-size": "9", "font-weight": "600", fill: "#f4f4f5" }, gg).textContent = m.name;
+  svgEl("text", { x: px(m.x) + r + 10, y: py(m.y) + 6, "font-size": "8", fill: "#a1a1aa" }, gg).textContent = `X:${m.x} Y:${m.y} Z:${m.z}`;
 }
 
 function renderTags() {
@@ -557,7 +574,6 @@ function renderAnalysis() {
   const hColor = a.health >= 60 ? "#10b981" : a.health >= 40 ? "#f59e0b" : "#ef4444";
   let html = '<div class="content-row">';
 
-  // Health card
   html += `<div class="panel health-card">
     <p class="health-label">組織健全性スコア</p>
     <div class="health-score" style="color:${hColor}">${a.health}</div>
@@ -568,7 +584,6 @@ function renderAnalysis() {
     <p class="logic-body">権力加重Y軸平均（公共性）× 60% ＋ 右下象限の非権力比率 × 40%で算出。権力の大きい人ほど組織全体のスコアへの影響が大きくなる設計。</p>
   </div></div>`;
 
-  // Distribution card
   html += `<div class="panel dist-card"><p class="dist-title">象限別パワー分布（権力×人数）</p>`;
   for (const [key, val] of Object.entries(QC)) {
     const pow = a.qPow[key] || 0;
@@ -589,7 +604,6 @@ function renderAnalysis() {
     <span class="note">※ 権力値で加重平均。権力の大きい人ほど組織の方向性に影響。</span>
   </div></div>`;
 
-  // Reading card
   html += `<div class="panel reading-card panel-full">
     <p class="reading-title">分析の読み方</p>
     <div class="reading-body">
@@ -632,6 +646,110 @@ function render() {
   renderMembers();
 }
 
+// --- Excel import ---
+function importExcel(file) {
+  const resultEl = document.getElementById("import-result");
+  const reader = new FileReader();
+
+  reader.onload = function(e) {
+    try {
+      const data = new Uint8Array(e.target.result);
+      const workbook = XLSX.read(data, { type: "array" });
+
+      // Use first sheet
+      const sheetName = workbook.SheetNames[0];
+      const sheet = workbook.Sheets[sheetName];
+      const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+
+      if (rows.length < 2) {
+        resultEl.className = "import-result error";
+        resultEl.textContent = "データが見つかりませんでした。2行目以降にデータを入力してください。";
+        return;
+      }
+
+      const imported = [];
+      let skipped = 0;
+
+      // Skip header row (row 0), parse from row 1
+      for (let i = 1; i < rows.length; i++) {
+        const row = rows[i];
+        if (!row || !row[0]) continue;
+
+        const name = String(row[0]).trim();
+        const x = parseFloat(row[1]);
+        const y = parseFloat(row[2]);
+        const z = parseFloat(row[3]);
+
+        if (!name || isNaN(x) || isNaN(y) || isNaN(z)) {
+          skipped++;
+          continue;
+        }
+
+        imported.push({
+          id: nextId++,
+          name,
+          x: clamp(Math.round(x), 0, 10),
+          y: clamp(Math.round(y), 0, 10),
+          z: clamp(Math.round(z), 1, 10),
+        });
+      }
+
+      if (imported.length === 0) {
+        resultEl.className = "import-result error";
+        resultEl.textContent = "有効なデータが見つかりませんでした。列の順番を確認してください。";
+        return;
+      }
+
+      members = imported;
+      selectedId = null;
+      render();
+
+      let msg = `${imported.length}名のデータを読み込みました。`;
+      if (skipped > 0) msg += ` （${skipped}行はスキップ）`;
+      resultEl.className = "import-result success";
+      resultEl.textContent = msg;
+
+    } catch (err) {
+      resultEl.className = "import-result error";
+      resultEl.textContent = "ファイルの読み込みに失敗しました: " + err.message;
+    }
+  };
+
+  reader.readAsArrayBuffer(file);
+}
+
+// --- Excel export ---
+function exportExcel() {
+  if (!members.length) { alert("エクスポートするデータがありません。"); return; }
+
+  const wsData = [["名前", "X（保守性：0-10）", "Y（公共性：0-10）", "Z（権力：1-10）"]];
+  members.forEach(m => wsData.push([m.name, m.x, m.y, m.z]));
+
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.aoa_to_sheet(wsData);
+
+  ws["!cols"] = [{ wch: 20 }, { wch: 18 }, { wch: 18 }, { wch: 18 }];
+
+  XLSX.utils.book_append_sheet(wb, ws, "組織座標データ");
+  XLSX.writeFile(wb, "org-coordinate-data.xlsx");
+}
+
+// --- Template download ---
+function downloadTemplate() {
+  const wsData = [
+    ["名前", "X（保守性：0-10）", "Y（公共性：0-10）", "Z（権力：1-10）"],
+    ["（ここに名前を入力）", 5, 5, 5],
+  ];
+
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.aoa_to_sheet(wsData);
+  ws["!cols"] = [{ wch: 20 }, { wch: 18 }, { wch: 18 }, { wch: 18 }];
+  XLSX.utils.book_append_sheet(wb, ws, "組織座標データ");
+  XLSX.writeFile(wb, "org-coordinate-template.xlsx");
+}
+
+// --- Event listeners ---
+
 // Tabs
 document.querySelectorAll(".tab-btn").forEach(btn => {
   btn.addEventListener("click", () => {
@@ -649,7 +767,7 @@ document.querySelectorAll(".tab-btn").forEach(btn => {
   });
 });
 
-// Add
+// Add member
 document.getElementById("btn-add").addEventListener("click", () => {
   const name = document.getElementById("input-name").value.trim();
   if (!name) return;
@@ -672,14 +790,31 @@ document.getElementById("btn-sample").addEventListener("click", () => {
   members = SAMPLE.map(m => ({ ...m }));
   nextId = 7;
   selectedId = null;
+  document.getElementById("import-result").className = "import-result";
   render();
 });
 
 document.getElementById("btn-clear").addEventListener("click", () => {
   members = [];
   selectedId = null;
+  document.getElementById("import-result").className = "import-result";
   render();
 });
+
+// Excel buttons
+document.getElementById("btn-import").addEventListener("click", () => {
+  document.getElementById("file-input").click();
+});
+
+document.getElementById("file-input").addEventListener("change", (e) => {
+  if (e.target.files.length > 0) {
+    importExcel(e.target.files[0]);
+    e.target.value = "";
+  }
+});
+
+document.getElementById("btn-export").addEventListener("click", exportExcel);
+document.getElementById("btn-template").addEventListener("click", downloadTemplate);
 
 // Enter key
 document.getElementById("input-name").addEventListener("keydown", e => {
